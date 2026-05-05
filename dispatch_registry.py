@@ -1,3 +1,4 @@
+from typing import Optional
 """
 JARVIS Dispatch Registry — tracks all active and recent project builds/dispatches.
 
@@ -85,7 +86,7 @@ class DispatchRegistry:
         conn.commit()
         conn.close()
 
-    def get_most_recent(self) -> dict | None:
+    def get_most_recent(self) -> Optional[dict ]:
         """Get the most recently updated dispatch."""
         conn = _get_db()
         row = conn.execute(
@@ -104,7 +105,7 @@ class DispatchRegistry:
         conn.close()
         return [dict(r) for r in rows]
 
-    def get_by_name(self, name: str) -> dict | None:
+    def get_by_name(self, name: str) -> Optional[dict ]:
         """Fuzzy match dispatch by project name."""
         conn = _get_db()
         row = conn.execute(
@@ -114,7 +115,7 @@ class DispatchRegistry:
         conn.close()
         return dict(row) if row else None
 
-    def get_recent_for_project(self, project_name: str, max_age_seconds: int = 300) -> dict | None:
+    def get_recent_for_project(self, project_name: str, max_age_seconds: int = 300) -> Optional[dict ]:
         """Return the most recent completed dispatch for a project if within max_age."""
         conn = _get_db()
         cutoff = time.time() - max_age_seconds

@@ -1,3 +1,4 @@
+from typing import Optional
 """
 JARVIS Mail Access — READ-ONLY access to Apple Mail.
 
@@ -304,7 +305,7 @@ end tell
     return messages
 
 
-async def read_message(subject_match: str) -> dict | None:
+async def read_message(subject_match: str) -> Optional[dict ]:
     """Read the full content of a message matching the subject.
 
     Returns {"sender", "subject", "date", "content"} or None.

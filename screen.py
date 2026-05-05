@@ -1,3 +1,4 @@
+from typing import Optional
 """
 JARVIS Screen Awareness — see what's on the user's screen.
 
@@ -105,7 +106,7 @@ end tell
         return []
 
 
-async def take_screenshot(display_only: bool = True) -> str | None:
+async def take_screenshot(display_only: bool = True) -> Optional[str ]:
     """Take a screenshot and return base64-encoded PNG.
 
     Args:

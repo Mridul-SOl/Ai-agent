@@ -1,3 +1,4 @@
+from typing import Optional
 """
 JARVIS Calendar Access — read Apple Calendar via AppleScript.
 
@@ -122,7 +123,7 @@ async def _fetch_calendar_events(cal_name: str, timeout: float = 12.0) -> list[d
         return []
 
 
-def _parse_applescript_date(s: str) -> datetime | None:
+def _parse_applescript_date(s: str) -> Optional[datetime ]:
     """Parse 'Wednesday, March 18, 2026 at 2:00:00 PM' to datetime."""
     # Remove day name prefix
     if ", " in s:
@@ -200,7 +201,7 @@ async def get_upcoming_events(hours: int = 4) -> list[dict]:
     ]
 
 
-async def get_next_event() -> dict | None:
+async def get_next_event() -> Optional[dict ]:
     """Get the single next upcoming event."""
     events = await get_upcoming_events(hours=24)
     return events[0] if events else None

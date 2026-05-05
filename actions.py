@@ -1,3 +1,4 @@
+from typing import Optional
 """
 JARVIS Action Executor — AppleScript-based system actions.
 
@@ -339,7 +340,7 @@ async def execute_action(intent: dict, projects: list = None) -> dict:
         intent: {"action": str, "target": str} from classify_intent()
         projects: list of known project dicts for resolving working dirs
 
-    Returns: {"success": bool, "confirmation": str, "project_dir": str | None}
+    Returns: {"success": bool, "confirmation": str, "project_dir": Optional[str ]}
     """
     action = intent.get("action", "chat")
     target = intent.get("target", "")

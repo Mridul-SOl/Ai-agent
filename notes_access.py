@@ -1,3 +1,4 @@
+from typing import Optional
 """
 JARVIS Apple Notes Access — READ + CREATE ONLY.
 
@@ -65,7 +66,7 @@ end tell
     return notes
 
 
-async def read_note(title_match: str) -> dict | None:
+async def read_note(title_match: str) -> Optional[dict ]:
     """Read a note by title (partial match). Returns title + body."""
     escaped = title_match.replace('"', '\\"')
     script = f'''

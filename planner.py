@@ -405,8 +405,8 @@ class TaskPlanner:
         Returns: {
             "task_type": str,
             "questions": [str, ...],
-            "project_match": str | None,
-            "first_question": str | None,
+            "project_match": Optional[str ],
+            "first_question": Optional[str ],
             "needs_questions": bool,
         }
         """
@@ -463,10 +463,10 @@ class TaskPlanner:
         """Process user's answer to a clarifying question.
 
         Returns: {
-            "next_question": str | None,
+            "next_question": Optional[str ],
             "plan_complete": bool,
             "needs_confirmation": bool,
-            "confirmation_summary": str | None,
+            "confirmation_summary": Optional[str ],
         }
         """
         plan = self.active_plan
@@ -537,7 +537,7 @@ class TaskPlanner:
         Returns: {
             "confirmed": bool,
             "cancelled": bool,
-            "modification_question": str | None,
+            "modification_question": Optional[str ],
         }
         """
         plan = self.active_plan

@@ -34,6 +34,43 @@ from typing import Optional
 
 import anthropic
 import httpx
+
+class MockAnthropicMessage:
+    def __init__(self, text):
+        self.text = text
+
+class MockAnthropicContent:
+    def __init__(self, text):
+        self.content = [MockAnthropicMessage(text)]
+
+class MockAnthropicMessages:
+    async def create(self, model, max_tokens, system=None, messages=None, **kwargs):
+        prompt = ""
+        if system:
+            prompt += f"{system}\n\n"
+        for m in messages:
+            prompt += f"{m['role']}: {m['content']}\n"
+        async with httpx.AsyncClient(timeout=120.0) as http:
+            try:
+                resp = await http.post("http://localhost:11434/api/generate", json={
+                    "model": "llama3.2:3b",
+                    "prompt": prompt,
+                    "stream": False
+                })
+                data = resp.json()
+                return MockAnthropicContent(data.get("response", ""))
+            except Exception as e:
+                import logging
+                logging.error(f"Ollama error: {e}")
+                return MockAnthropicContent("Sorry sir, my local language model is offline.")
+
+class MockAsyncAnthropic:
+    def __init__(self, *args, **kwargs):
+        self.messages = MockAnthropicMessages()
+
+anthropic.AsyncAnthropic = MockAsyncAnthropic
+
+import httpx
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -732,7 +769,7 @@ def strip_markdown_for_tts(text: str) -> str:
 import re as _action_re
 
 
-def extract_action(response: str) -> tuple[str, dict | None]:
+def extract_action(response: str) -> Optional[tuple[str, dict ]]:
     """Extract [ACTION:X] tag from LLM response.
 
     Returns (clean_text_for_tts, action_dict_or_none).
@@ -875,7 +912,7 @@ async def _execute_open_terminal():
         log.error(f"Open terminal failed: {e}")
 
 
-def _find_project_dir(project_name: str) -> str | None:
+def _find_project_dir(project_name: str) -> Optional[str ]:
     """Find a project directory by name from cached projects or Desktop."""
     for p in cached_projects:
         if project_name.lower() in p.get("name", "").lower():
@@ -1047,34 +1084,28 @@ _last_greeting_time: float = 0
 # ---------------------------------------------------------------------------
 
 async def synthesize_speech(text: str) -> Optional[bytes]:
-    """Generate speech audio from text using Fish Audio TTS."""
-    if not FISH_API_KEY:
-        log.warning("FISH_API_KEY not set, skipping TTS")
-        return None
-
+    import tempfile, os, asyncio
     try:
-        async with httpx.AsyncClient(timeout=15.0) as http:
-            response = await http.post(
-                FISH_API_URL,
-                headers={
-                    "Authorization": f"Bearer {FISH_API_KEY}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "text": text,
-                    "reference_id": FISH_VOICE_ID,
-                    "format": "mp3",
-                },
-            )
-            if response.status_code == 200:
-                _session_tokens["tts_calls"] += 1
-                _append_usage_entry(0, 0, "tts")
-                return response.content
-            else:
-                log.error(f"TTS error: {response.status_code}")
-                return None
+        with tempfile.NamedTemporaryFile(suffix=".m4a", delete=False) as f:
+            temp_path = f.name
+        process = await asyncio.create_subprocess_exec(
+            "say", "-v", "Daniel", "-o", temp_path, text,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        await process.communicate()
+        with open(temp_path, "rb") as f:
+            data = f.read()
+        os.unlink(temp_path)
+        
+        # Increment usage to avoid breaking tracking
+        if "tts_calls" in _session_tokens:
+            _session_tokens["tts_calls"] += 1
+            _append_usage_entry(0, 0, "tts")
+        return data
     except Exception as e:
-        log.error(f"TTS error: {e}")
+        import logging
+        logging.error(f"TTS error: {e}")
         return None
 
 
@@ -1190,7 +1221,7 @@ def _append_usage_entry(input_tokens: int, output_tokens: int, call_type: str = 
         pass
 
 
-def _get_usage_for_period(seconds: float | None = None) -> dict:
+def _get_usage_for_period(seconds: Optional[float ] = None) -> dict:
     """Sum usage from the log file for a time period. None = all time."""
     import json as _json
     totals = {"input_tokens": 0, "output_tokens": 0, "api_calls": 0, "tts_calls": 0}
@@ -1449,7 +1480,7 @@ def _scan_projects_sync() -> list[dict]:
     return projects
 
 
-def detect_action_fast(text: str) -> dict | None:
+def detect_action_fast(text: str) -> Optional[dict ]:
     """Keyword-based action detection — ONLY for short, obvious commands.
 
     Everything else goes to the LLM which uses [ACTION:X] tags when it decides
@@ -2404,7 +2435,7 @@ class KeyUpdate(BaseModel):
     key_value: str
 
 class KeyTest(BaseModel):
-    key_value: str | None = None
+    key_value: Optional[str ] = None
 
 class PreferencesUpdate(BaseModel):
     user_name: str = ""

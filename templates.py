@@ -1,3 +1,4 @@
+from typing import Optional
 """
 JARVIS Prompt Templates — Structured prompts for Claude Code tasks.
 
@@ -207,7 +208,7 @@ Build an API for {project_name}.
 }
 
 
-def get_template(task_type: str, request_text: str) -> str | None:
+def get_template(task_type: str, request_text: str) -> Optional[str ]:
     """Find the best matching template for a task type and request.
 
     Returns the template format string or None if no good match.

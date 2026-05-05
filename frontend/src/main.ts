@@ -233,3 +233,24 @@ btnSettings.addEventListener("click", (e) => {
 setTimeout(() => {
   checkFirstTimeSetup();
 }, 2000);
+
+// ---------------------------------------------------------------------------
+// Text input (chat)
+// ---------------------------------------------------------------------------
+
+const chatInput = document.getElementById("chat-input") as HTMLInputElement;
+if (chatInput) {
+  chatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && chatInput.value.trim()) {
+      const text = chatInput.value.trim();
+      chatInput.value = "";
+      
+      // Stop any playing audio
+      audioPlayer.stop();
+      // Send as if voice
+      socket.send({ type: "transcript", text, isFinal: true });
+      transition("thinking");
+    }
+  });
+}
+
